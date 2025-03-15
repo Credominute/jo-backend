@@ -42,6 +42,6 @@ def update_user_by_id(user_id: int, updated_user: UserCreate, db: Session):
                             detail="User not found")
     for key, value in updated_user.dict().items():
         setattr(user, key, value)
-        db.commit()
-        db.refresh(user)
-        return user
+    db.commit()
+    db.refresh(user)
+    return user

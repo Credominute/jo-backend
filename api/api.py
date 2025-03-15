@@ -21,7 +21,7 @@ class UserApi:
             return create_user(user,db)
 
         @self.router.get("/", response_model=List[UserResponse])
-        def read_user_endpoint(db: Session = Depends(get_db)):
+        def read_users_endpoint(db: Session = Depends(get_db)):
             return read_user(db)
 
         @self.router.get("/{user_id}", response_model=UserResponse)
