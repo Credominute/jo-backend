@@ -6,7 +6,7 @@ from src.schema.user_schema import UserCreate
 
 # création d'un utilisateur
 def create_user(user: UserCreate,db: Session):
-    db_user = User(**user.dict())
+    db_user = User(**user.model_dump())
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
@@ -40,7 +40,7 @@ def update_user_by_id(user_id: int, updated_user: UserCreate, db: Session):
     if not user:
         raise HTTPException(status_code=404,
                             detail="User not found")
-    for key, value in updated_user.dict().items():
+    for key, value in updated_user.model_dump().items():
         setattr(user, key, value)
     db.commit()
     db.refresh(user)
