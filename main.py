@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
 from api.api import UserApi, TicketApi, OrderApi
-from api.auth_api import router as auth_router
+from api.auth import router as auth_router
 from src.config.database import engine, Base
 
 # Création des tables
@@ -17,4 +17,5 @@ order_api = OrderApi()
 app.include_router(user_api.router, prefix='/user', tags=["Users"])
 app.include_router(user_api.router, prefix='/order', tags=["Order"])
 app.include_router(user_api.router, prefix='/ticket', tags=["Tickets"])
+
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])

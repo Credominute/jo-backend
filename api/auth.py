@@ -2,16 +2,16 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from src.config.database import get_db
-from src.controller.viewer_controller import create_viewer, login_viewer
+from src.controller.user_controller import create_user, login_user
 from src.schema.token_schema import Token
-from src.schema.viewer_schema import ViewerResponse, ViewerCreate
+from src.schema.user_schema import UserResponse, UserCreate
 
 router = APIRouter()
 
-@router.post("/register", response_model=ViewerResponse)
-def register_viewer(viewer: ViewerCreate, db: Session = Depends(get_db)):
-    return create_viewer(viewer,db)
+@router.post("/register", response_model=UserResponse)
+def register_viewer(user: UserCreate, db: Session = Depends(get_db)):
+    return create_user(user,db)
 
 @router.post("/", response_model=Token)
-def login(viewer: ViewerCreate, db: Session = Depends(get_db)):
- return login_viewer(viewer,db)
+def login(user: UserCreate, db: Session = Depends(get_db)):
+ return login_user(user,db)

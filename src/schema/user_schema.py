@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 
-
 # Schema pour créer ou mettre à jour un utilisateur
 class UserCreate(BaseModel):
     nom: str
