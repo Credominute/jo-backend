@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 
-from api.api import UserApi, TicketApi, OrderApi
+from api.order_api import OrderApi
+from api.ticket_api import TicketApi
+from api.user_api import UserApi
+
 from api.auth import router as auth_router
 from src.config.database import engine, Base
 

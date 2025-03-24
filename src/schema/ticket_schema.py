@@ -6,6 +6,7 @@ class TicketCreate(BaseModel):
     is_single: bool
     is_duo: bool
     is_familial: bool
+    number_of_tickets: int
 
 # Schéma pour les réponses (incluant l'ID)
 class TicketResponse(TicketCreate):

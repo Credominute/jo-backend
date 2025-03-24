@@ -10,6 +10,6 @@ class Order(Base):
     user_id = Column(Integer, ForeignKey("user.user_id"))
     ticket_id = Column(Integer, ForeignKey("ticket.ticket_id"))
     date_order = Column(DateTime, default=datetime.now)
-    price = Column(Float)  # Ajout de la colonne prix, en fonction du billet commandé
+    price = Column(Float)  # Ajout de la colonne prix, en fonction du type de billet commandé
     user = relationship ("User")
     ticket = relationship ("Ticket")
