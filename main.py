@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from api.order_api import OrderApi
 from api.ticket_api import TicketApi
@@ -19,6 +20,10 @@ app = FastAPI()
 @app.on_event("startup")
 def startup_event():
     drop_and_create_database()
+
+app.add_middleware(
+    CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=[""]
+)
 
 #Initialisation des api User, Ticket et Order
 user_api = UserApi()
