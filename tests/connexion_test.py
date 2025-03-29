@@ -9,3 +9,5 @@ try:
         print("✅ Connexion réussie à PostgreSQL sur alwaysdata")
 except Exception as e:
     print(f"❌ Erreur de connexion : {e}")
+
+# run "tests" to verify connexion to database
