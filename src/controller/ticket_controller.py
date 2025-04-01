@@ -14,10 +14,10 @@ def create_ticket(ticket: TicketCreate,db: Session):
 
 # lecture d'un billet par son id
 def read_ticket_by_id(ticket_id: int, db: Session):
-    ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
+    ticket = db.query(Ticket).filter(Ticket.ticket_id == ticket_id).first()
     if not ticket:
         raise HTTPException(status_code=404,
-                            detail="ticket not found")
+                            detail="ticket with id {ticket_id} not found")
     return ticket
 
 # lecture de tous les billets
@@ -26,7 +26,7 @@ def read_ticket(db:Session):
 
 # supprimer un billet selon son id
 def delete_ticket_by_id(ticket_id: int, db: Session):
-    ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
+    ticket = db.query(Ticket).filter(Ticket.ticket_id == ticket_id).first()
     if not ticket:
         raise HTTPException(status_code=404,
                             detail="ticket not found")
@@ -36,7 +36,7 @@ def delete_ticket_by_id(ticket_id: int, db: Session):
 
 # mise à jour d'un billet selon son id
 def update_ticket_by_id(ticket_id: int, updated_ticket: TicketCreate, db: Session):
-    ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
+    ticket = db.query(Ticket).filter(Ticket.ticket_id == ticket_id).first()
     if not ticket:
         raise HTTPException(status_code=404,
                             detail="ticket not found")
