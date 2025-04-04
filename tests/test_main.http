@@ -1,11 +1,40 @@
-# tests your FastAPI endpoints
-
-GET http://127.0.0.1:8000/
+# Test de disponibilité de l'API
+GET http://127.0.0.1:8000/ping
 Accept: application/json
 
 ###
 
-GET http://127.0.0.1:8000/hello/User
+# Test de redirection vers la documentation
+GET http://127.0.0.1:8000/api
 Accept: application/json
+
+###
+
+# Test de récupération des utilisateurs (ajouter un vrai endpoint dans `UserApi` si nécessaire)
+GET http://127.0.0.1:8000/user/
+Accept: application/json
+
+###
+
+# Test de récupération des commandes (ajouter un vrai endpoint dans `OrderApi` si nécessaire)
+GET http://127.0.0.1:8000/order/
+Accept: application/json
+
+###
+
+# Test de récupération des tickets (ajouter un vrai endpoint dans `TicketApi` si nécessaire)
+GET http://127.0.0.1:8000/ticket/
+Accept: application/json
+
+###
+
+# Test d'authentification (si un endpoint de connexion existe)
+POST http://127.0.0.1:8000/auth/login
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "testpassword"
+}
 
 ###
