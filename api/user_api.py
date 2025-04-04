@@ -17,7 +17,6 @@ class UserApi:
 
         @self.router.post("/", response_model=UserResponse)
         def create_user_endpoint(user: UserCreate, request: Request, db: Session = Depends(get_db)):
-            verify_token(request)
             return create_user(user, db)
 
         @self.router.get("/", response_model=List[UserResponse])

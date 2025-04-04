@@ -15,6 +15,7 @@ class TicketResponse(BaseModel):
 
 # Schema pour créer ou mettre à jour un billet
 class TicketCreate(BaseModel):
+    order_id: int
     is_single: bool
     is_duo: bool
     is_familial: bool

@@ -17,7 +17,7 @@ def read_ticket_by_id(ticket_id: int, db: Session):
     ticket = db.query(Ticket).filter(Ticket.ticket_id == ticket_id).first()
     if not ticket:
         raise HTTPException(status_code=404,
-                            detail="ticket with id {ticket_id} not found")
+                            detail=f"ticket with id {ticket_id} not found")
     return ticket
 
 # lecture de tous les billets

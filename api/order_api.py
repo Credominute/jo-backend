@@ -21,5 +21,4 @@ class OrderApi:
 
         @self.router.get("/{order_id}", response_model=TicketResponse)
         def read_order_endpoint(order_id: int, request: Request, db: Session = Depends(get_db)):
-            verify_token(request)
             return read_order_by_id(order_id, db)

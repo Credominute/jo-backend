@@ -18,8 +18,13 @@ def create_user(user: UserCreate,db: Session):
             detail="Nom d'utilisateur déjà utilisé."
         )
     mdp_hache = pwd_context.hash(user.mot_de_passe)
-    new_user = User(nom=user.nom,
-                    mdp_hache=mdp_hache)
+    new_user = User(
+        nom=user.nom,
+        prenom=user.prenom,
+        mail=user.mail,
+        telephone=user.telephone,
+        mot_de_passe=mdp_hache
+    )
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -43,7 +48,7 @@ def login_user(user: UserCreate, db: Session):
 
 # lecture d'un utilisateur par son id
 def read_user_by_id(user_id: int, db: Session):
-    user = db.query(User).filter(User.id == user_id).first()
+    user = db.query(User).filter(User.user_id == user_id).first()
     if not user:
         raise HTTPException(status_code=404,
                             detail="User not found")
@@ -55,7 +60,7 @@ def read_user(db:Session):
 
 # supprimer un utilisateur selon son id
 def delete_user_by_id(user_id: int, db: Session):
-    user = db.query(User).filter(User.id == user_id).first()
+    user = db.query(User).filter(User.user_id == user_id).first()
     if not user:
         raise HTTPException(status_code=404,
                             detail="User not found")
@@ -65,7 +70,7 @@ def delete_user_by_id(user_id: int, db: Session):
 
 # mise à jour d'un utilisateur selon son id
 def update_user_by_id(user_id: int, updated_user: UserCreate, db: Session):
-    user = db.query(User).filter(User.id == user_id).first()
+    user = db.query(User).filter(User.user_id == user_id).first()
     if not user:
         raise HTTPException(status_code=404,
                             detail="User not found")
