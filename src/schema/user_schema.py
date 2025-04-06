@@ -1,4 +1,5 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
+
 
 # Schema pour créer ou mettre à jour un utilisateur
 class UserCreate(BaseModel):
@@ -12,5 +13,8 @@ class UserCreate(BaseModel):
 class UserResponse(UserCreate):
     user_id: int
 
+    model_config = ConfigDict(from_attributes=True)
+
+"""Contenu déprécié : 
     class Config:
-        from_attributes = True
+        from_attributes = True"""

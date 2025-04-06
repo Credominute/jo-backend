@@ -2,6 +2,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from src.model.user import User
+from src.schema.login_schema import UserLogin
 from src.schema.user_schema import UserCreate
 
 from src.config.hash import pwd_context
@@ -30,7 +31,7 @@ def create_user(user: UserCreate,db: Session):
     db.refresh(new_user)
     return(new_user)
 
-def login_user(user: UserCreate, db: Session):
+def login_user(user: UserLogin, db: Session):
    db_user = get_user_by_nom(db=db,
                              nom=user.nom)
    if not db_user:
@@ -38,7 +39,7 @@ def login_user(user: UserCreate, db: Session):
            status_code=status.HTTP_400_BAD_REQUEST,
            detail="Nom d'utilisateur non existant."
        )
-   if pwd_context.verify(user.mot_de_passe, db_user.mdp_hache):
+   if pwd_context.verify(user.mot_de_passe, db_user.mot_de_passe):
        return create_token(data={"sub": user.nom})
    else:
        raise HTTPException(

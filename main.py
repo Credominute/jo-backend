@@ -1,15 +1,13 @@
 from contextlib import asynccontextmanager
-
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse
-from sqlalchemy import text
 from api.order_api import OrderApi
 from api.ticket_api import TicketApi
 from api.user_api import UserApi
-
 from api.auth import router as auth_router
 from src.config.database import engine, Base
+
 
 # Création des tables sans suppression des données existantes
 # Base.metadata.create_all(bind=engine)
