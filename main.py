@@ -1,7 +1,11 @@
+import os
+
+import uvicorn
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse
+
 from api.order_api import OrderApi
 from api.ticket_api import TicketApi
 from api.user_api import UserApi
@@ -53,3 +57,7 @@ def redirect_to_docs():
 @app.get("/test-cors")
 def test_cors():
     return {"message": "CORS test passed"}
+
+if __name__ == "__main__":
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)

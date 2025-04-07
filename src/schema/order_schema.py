@@ -14,7 +14,10 @@ class OrderCreate(BaseModel):
     price: float
     ticket_type: TicketTypeEnum  # 'single', 'duo', 'familial'
 
-    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        use_enum_values=True
+    )
 
 class OrderResponse(BaseModel):
     order_id: int
@@ -23,16 +26,13 @@ class OrderResponse(BaseModel):
     ticket_type: TicketTypeEnum
     tickets: List[TicketResponse]  # Liste de tickets associés à la commande
 
-    class Config:
-        orm_mode = True
-        from_attributes = True
-        use_enum_values = True
+    model_config = ConfigDict(
+        from_attributes=True,
+        use_enum_values=True
+    )
 
 class OrderWithTicketsResponse(OrderCreate):
     order_id: int
     tickets: List[TicketResponse]
 
     model_config = ConfigDict(from_attributes=True)
-
-""" Contenu déprécié : class Config:
-                            orm_mode = True"""

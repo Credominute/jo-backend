@@ -12,11 +12,6 @@ class TicketResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-"""Contenus dépréciés:
-    class Config:
-        orm_mode = True
-        from_attributes = True"""
-
 # Schema pour créer ou mettre à jour un billet
 class TicketCreate(BaseModel):
     order_id: int
