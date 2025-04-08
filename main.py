@@ -58,6 +58,7 @@ def redirect_to_docs():
 def test_cors():
     return {"message": "CORS test passed"}
 
+# Point d'entrée pour initialiser un serveur local
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
