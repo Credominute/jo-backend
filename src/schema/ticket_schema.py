@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict
-
+from typing import Optional
 
 # Schema pour créer ou mettre à jour un billet
 class TicketResponse(BaseModel):
@@ -9,6 +9,7 @@ class TicketResponse(BaseModel):
     is_duo: bool
     is_familial: bool
     number_of_places: int
+    qrcode: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 

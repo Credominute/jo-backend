@@ -1,6 +1,11 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Enum
 from sqlalchemy.orm import relationship
 from src.config.database import Base
+import enum
+
+class UserRole(enum.Enum):
+    user = "user"
+    admin = "admin"
 
 class User(Base):
     __tablename__ = 'user' # client en français
@@ -11,6 +16,7 @@ class User(Base):
     mail = Column(String(50), unique = True)
     telephone = Column(String(10))
     mot_de_passe = Column(String(255), nullable=False)
+    role = Column(Enum(UserRole), default=UserRole.user, nullable=False)
 
     # Relation 1:0 avec la commande
     orders = relationship("Order", back_populates="user",

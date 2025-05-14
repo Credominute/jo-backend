@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-
+from src.service.qrcode_service import generate_qr_code
 from src.model.ticket import Ticket
 from src.schema.ticket_schema import TicketCreate
 
@@ -18,7 +18,12 @@ def read_ticket_by_id(ticket_id: int, db: Session):
     if not ticket:
         raise HTTPException(status_code=404,
                             detail=f"ticket with id {ticket_id} not found")
-    return ticket
+    ticket_data = ticket.to_dict()
+    # Générer le QR code et l'ajouter aux données du ticket
+    ticket_data['qrcode'] = generate_qr_code(str(ticket.ticket_id))
+    return ticket_data
+
+"""ancien code : return ticket"""
 
 # lecture de tous les billets
 def read_ticket(db:Session):
