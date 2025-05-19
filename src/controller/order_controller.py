@@ -72,5 +72,3 @@ def read_order_by_id(order_id: int, db: Session):
     if not order:
         raise HTTPException(status_code=404,detail="order not found")
     return order
-
-

@@ -1,7 +1,6 @@
 from fastapi import HTTPException, Request
 from jose import jwt, JWTError
 from starlette import status
-
 from src.config.hash import ACCESS_TOKEN_EXPIRE_MINUTES, SECRET_KEY, ALGORITHM
 from src.schema.token_schema import Token
 from datetime import datetime, timedelta

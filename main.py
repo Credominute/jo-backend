@@ -1,11 +1,9 @@
 import os
-
 import uvicorn
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse
-
 from api.order_api import OrderApi
 from api.ticket_api import TicketApi
 from api.user_api import UserApi

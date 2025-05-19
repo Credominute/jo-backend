@@ -23,15 +23,36 @@ app = FastAPI(lifespan=lifespan)
 
 from fastapi.testclient import TestClient
 from main import app
+from fastapi import HTTPException
 from src.config.database import Base, engine, SessionLocal
 from src.model.order import Order
 from src.model.ticket import Ticket
 from src.model.user import User
+from src.schema.order_schema import OrderCreate
+from src.schema.ticket_schema import TicketCreate
+from src.schema.user_schema import UserCreate
+from src.schema.login_schema import UserLogin
+from src.controller.order_controller import create_order_with_ticket
+from src.controller.ticket_controller import create_ticket, read_ticket_by_id
+from src.controller.user_controller import (
+    verify_user,
+    create_user as uc_create_user,
+    login_user,
+    read_user_by_id,
+    delete_user_by_id,
+    update_user_by_id,
+    USER_NOT_FOUND_MSG,
+)
+from src.service.qrcode_service import generate_qr_code
+
 import uuid
+import base64
+from io import BytesIO
+import qrcode
+import pytest
 
-
+# Préparation de la base
 Base.metadata.create_all(bind=engine)
-
 client = TestClient(app)
 
 def clear_db():
@@ -44,19 +65,17 @@ def clear_db():
     finally:
         db.close()
 
-# test de santé (on vérifie que l'API répond)
+#— Tests existants —#
+
 def test_ping():
     response = client.get("/ping")
     assert response.status_code == 200
     assert response.json() == {"message": "pong"}
 
-# test de redirection vers Swagger (pour l'administrateur)
 def test_redirect_to_docs():
     response = client.get("/api", follow_redirects=False)
-    assert response.status_code == 307  # Redirection temporaire
+    assert response.status_code == 307
     assert response.headers["location"] == "/docs"
-
-# Ou bien via des tests automatiques des endpoints :
 
 def test_user_endpoint():
     clear_db()
@@ -68,121 +87,161 @@ def test_user_endpoint():
         "telephone": "0123456789",
         "mot_de_passe": "testpassword"
     }
+    r = client.post("/user/", json=user_data)
+    assert r.status_code == 200
+    d = r.json()
+    assert d["nom"] == "Dupont"
+    assert d["mail"] == mail
 
-    response = client.post("/user/", json=user_data)
-    assert response.status_code == 200, f"Erreur: {response.json()}"
-    data = response.json()
-    assert data["nom"] == "Dupont"
-    assert data["mail"] == mail
-
-# Test de création + récupération d'une commande
 def test_create_and_get_order():
     clear_db()
     mail = f"user_{uuid.uuid4().hex[:8]}@ex.com"
-
-    # Créer un utilisateur
-    user_data = {
+    # Créer l'utilisateur
+    u = {
         "nom": "Test",
         "prenom": "User",
         "mail": mail,
         "telephone": "1234567890",
         "mot_de_passe": "testpassword"
     }
-    user_response = client.post("/user/", json=user_data)
-    assert user_response.status_code == 200, f"Erreur création utilisateur: {user_response.json()}"
-    user_id = user_response.json().get("user_id")
-    assert user_id, "L'ID de l'utilisateur est manquant"
+    ur = client.post("/user/", json=u)
+    assert ur.status_code == 200
+    uid = ur.json().get("user_id")
+    assert uid
+    # Créer la commande DUO
+    od = {"user_id": uid, "price": 100.0, "ticket_type": "DUO"}
+    cr = client.post("/order/", json=od)
+    assert cr.status_code in (200, 201)
+    co = cr.json()
+    oid = co["order_id"]
+    assert oid
+    assert co["ticket_type"] == "DUO"
+    assert len(co.get("tickets", [])) == 2
+    assert all(t["is_duo"] for t in co["tickets"])
+    # Récupérer la commande
+    gr = client.get(f"/order/{oid}")
+    assert gr.status_code == 200
+    go = gr.json()
+    assert go["ticket_type"] == "DUO"
+    assert len(go.get("tickets", [])) == 2
 
-    # Création d'une commande
-    order_data = {
-        "user_id": user_id,
-        "price": 100.0,
-        "ticket_type": "DUO"  # "DUO" est en majuscules selon l'énumération
-    }
-    create_response = client.post("/order/", json=order_data)
-
-    # Vérification de la réponse de création
-    assert create_response.status_code in [200, 201], f"Erreur: {create_response.json()}"
-    created_order = create_response.json()
-    order_id = created_order.get("order_id")
-    assert order_id, "order_id est absent de la réponse"
-
-    # Vérifier que le ticket_type est bien retourné en majuscules
-    assert created_order.get("ticket_type") == "DUO", f"ticket_type absent ou incorrect: {created_order}"
-
-    # Vérification des billets associés à la commande (on s'attend à 2 billets pour un type DUO)
-    assert len(created_order.get("tickets", [])) == 2, f"Nombre de billets incorrect: {created_order.get('tickets')}"
-
-    # Récupération de la commande
-    get_response = client.get(f"/order/{order_id}")
-    assert get_response.status_code == 200, f"Erreur récupération: {get_response.json()}"
-    retrieved_order = get_response.json()
-
-    # Vérification du type de billet dans la commande récupérée
-    assert retrieved_order.get("ticket_type") == "DUO", f"ticket_type incorrect: {retrieved_order}"
-
-    # Vérification que les billets sont bien retournés dans la commande récupérée
-    assert len(retrieved_order.get("tickets", [])) == 2, f"Nombre de billets incorrect dans la récupération: {retrieved_order.get('tickets')}"
-    assert all(ticket['is_duo'] is True for ticket in retrieved_order['tickets']), "Certains billets ne sont pas de type DUO"
-
-# Test de récupération des tickets
 def test_ticket_endpoint():
-    response = client.get("/ticket")
-    assert response.status_code == 200
-    assert "application/json" in response.headers["content-type"]
+    r = client.get("/ticket")
+    assert r.status_code == 200
+    assert "application/json" in r.headers["content-type"]
 
-# Test de création d'un ticket lié à une commande
-
-def test_create_ticket():
+def test_create_ticket_via_api():
     clear_db()
     mail = f"user_{uuid.uuid4().hex[:8]}@ex.com"
-    # Créer un utilisateur
-    user_data = {
+    u = {"nom":"Test","prenom":"User","mail":mail,"telephone":"1234567890","mot_de_passe":"testpassword"}
+    ur = client.post("/user/", json=u); uid = ur.json()["user_id"]
+    lr = client.post("/auth/login", json={"mail":mail,"mot_de_passe":"testpassword"})
+    token = lr.json().get("access_token")
+    assert token
+    od = {"user_id": uid, "price": 100.0, "ticket_type": "DUO"}
+    create_order_resp = client.post("/order/", json=od)
+    assert create_order_resp.status_code in (200, 201)
+    oid = create_order_resp.json()["order_id"]
+    td = {"order_id": oid, "is_single": False, "is_duo": True, "is_familial": False, "number_of_places": 2}
+    tr = client.post("/ticket", json=td, headers={"Authorization":f"Bearer {token}"})
+    assert tr.status_code in (200,201)
+    t = tr.json()
+    assert t["order_id"] == oid
+    assert t["is_duo"] and not t["is_familial"]
+    assert t["number_of_places"] == 2
+
+def test_register_and_login_flow():
+    clear_db()
+    ud = {
         "nom": "Test",
-        "prenom": "User",
-        "mail": mail,
-        "telephone": "1234567890",
-        "mot_de_passe": "testpassword"
+        "prenom": "Auth",
+        "mail": f"auth_{uuid.uuid4().hex[:8]}@ex.com",
+        "telephone": "0102030405",
+        "mot_de_passe": "SecurePass123!"
     }
-    user_response = client.post("/user/", json=user_data)
-    assert user_response.status_code == 200, f"Erreur création utilisateur: {user_response.json()}"
-    user_id = user_response.json().get("user_id")
-    assert user_id, "L'ID de l'utilisateur est manquant"
+    rr = client.post("/auth/register", json=ud)
+    assert rr.status_code == 200
+    ru = rr.json()
+    assert ru["mail"] == ud["mail"] and "user_id" in ru
+    lr = client.post("/auth/login", json={"mail":ud["mail"],"mot_de_passe":ud["mot_de_passe"]})
+    assert lr.status_code == 200 and lr.json().get("access_token")
+    br = client.post("/auth/login", json={"mail":ud["mail"],"mot_de_passe":"bad"})
+    assert br.status_code in (400,401)
+    nr = client.post("/auth/login", json={"mail":"no@user","mot_de_passe":"any"})
+    assert nr.status_code in (400,401)
 
-    # Se connecter pour récupérer le token
-    login_data = {
-        "nom": "Test",
-        "mot_de_passe": "testpassword"
-    }
-    login_response = client.post("/auth/", json=login_data)
-    assert login_response.status_code == 200, f"Erreur login: {login_response.json()}"
-    token = login_response.json().get("access_token")
-    assert token, "Le token d'accès est manquant"
+#— Nouveaux tests de services et contrôleurs —#
 
-    # Créer une commande en utilisant l'ID de l'utilisateur
-    order_data = {
-        "user_id": user_id,
-        "price": 100.0,
-        "ticket_type": "DUO"
-    }
-    order_response = client.post("/order/", json=order_data)
-    assert order_response.status_code in [200, 201], f"Erreur création de la commande: {order_response.json()}"
-    order_id = order_response.json().get("order_id")
-    assert order_id, "order_id est absent de la réponse"
+def test_generate_qr_code_service():
+    data = "hello"
+    b64 = generate_qr_code(data)
+    raw = base64.b64decode(b64)
+    # Vérifier header PNG
+    assert raw.startswith(b"\x89PNG\r\n\x1a\n")
+    # Générer image de référence
+    img = qrcode.make(data)
+    buf = BytesIO(); img.save(buf, format="PNG")
+    assert raw == buf.getvalue()
 
-    # Créer un ticket lié à la commande
-    ticket_data = {
-        "order_id": order_id,
-        "is_single": False,
-        "is_duo": True,
-        "is_familial": False,
-        "number_of_places": 2
-    }
-    headers = {"Authorization": f"Bearer {token}"}
-    ticket_response = client.post("/ticket", json=ticket_data, headers=headers)
-    assert ticket_response.status_code in [200, 201], f"Erreur: {ticket_response.text}"
-    ticket = ticket_response.json()
-    assert ticket["order_id"] == order_id
-    assert ticket["is_duo"] is True
-    assert ticket["is_familial"] is False
-    assert ticket["number_of_places"] == 2
+def test_create_and_read_ticket_controller(db_session=SessionLocal()):
+    # 0) Créer un utilisateur pour avoir un user_id valide
+    from src.model.user import User
+    from src.config.hash import pwd_context
+
+    raw_pw = "dummy"
+    user = User(
+        nom="Tmp",
+        prenom="User",
+        mail="tmp@example.com",
+        telephone="0000000000",
+        mot_de_passe=pwd_context.hash(raw_pw)
+    )
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
+    user_id = user.user_id
+
+    # 1) Créer la commande liée à ce user
+    from src.controller.order_controller import create_order_with_ticket
+    order_data = OrderCreate(user_id=user_id, price=10.0, ticket_type="SIMPLE")
+    order_resp = create_order_with_ticket(order_data, db_session)
+    order_id = order_resp.order_id
+
+    # 2) Création du ticket
+    tc = TicketCreate(
+        order_id=order_id,
+        is_single=True, is_duo=False, is_familial=False,
+        number_of_places=1
+    )
+    t = create_ticket(tc, db_session)
+    assert t.ticket_id is not None
+
+    # 3) Lecture et QR Code
+    rd = read_ticket_by_id(t.ticket_id, db_session)
+    assert rd["ticket_id"] == t.ticket_id
+    assert "qrcode" in rd
+    with pytest.raises(HTTPException):
+        read_ticket_by_id(0, db_session)
+
+
+def test_user_controller_crud(db_session=SessionLocal()):
+    # verify_user
+    assert verify_user("x@y.com", db_session) == {"exists": False}
+    # create_user & read_user_by_id
+    uc = UserCreate(nom="N", prenom="P", mail="u@x.com", telephone="0", mot_de_passe="pw")
+    user = uc_create_user(uc, db_session)
+    fetched = read_user_by_id(user.user_id, db_session)
+    assert fetched.mail == "u@x.com"
+    # login_user
+    tok = login_user(UserLogin(mail="u@x.com", mot_de_passe="pw"), db_session)
+    assert hasattr(tok, "access_token")
+    with pytest.raises(HTTPException):
+        login_user(UserLogin(mail="u@x.com", mot_de_passe="bad"), db_session)
+    # update & delete
+    uc2 = UserCreate(nom="N", prenom="Q", mail="u@x.com", telephone="1", mot_de_passe="pw")
+    upd = update_user_by_id(user.user_id, uc2, db_session)
+    assert upd.prenom == "Q"
+    deleted = delete_user_by_id(user.user_id, db_session)
+    assert deleted.user_id == user.user_id
+    with pytest.raises(HTTPException):
+        delete_user_by_id(user.user_id, db_session)
