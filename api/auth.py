@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from src.config.database import get_db
-from src.controller.user_controller import create_user, login_user
+from src.controller.user_controller import (verify_user, create_user, login_user)
 from src.schema.login_schema import UserLogin
 from src.schema.token_schema import Token
 from src.schema.user_schema import UserResponse, UserCreate
@@ -16,3 +16,9 @@ def register_viewer(user: UserCreate, db: Session = Depends(get_db)):
 def login(user: UserLogin, db: Session = Depends(get_db)):
     # Appel de la fonction login pour obtenir le token
     return login_user(user,db)
+
+@router.get("/verify")
+def check_user_existence(mail: str, db: Session = Depends(get_db)):
+    result = verify_user(mail, db)
+    # On retourne toujours un 200 avec un booléen explicite
+    return {"exists": result["exists"]}

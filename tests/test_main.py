@@ -245,3 +245,19 @@ def test_user_controller_crud(db_session=SessionLocal()):
     assert deleted.user_id == user.user_id
     with pytest.raises(HTTPException):
         delete_user_by_id(user.user_id, db_session)
+
+def test_admin_role_assignment():
+    clear_db()
+    admin_email = "admin@hotmail.com"
+    user_data = {
+        "nom": "Admin",
+        "prenom": "User",
+        "mail": admin_email,
+        "telephone": "0123456789",
+        "mot_de_passe": "adminpassword"
+    }
+    response = client.post("/user/", json=user_data)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["mail"] == admin_email
+    assert data["role"] == "admin"

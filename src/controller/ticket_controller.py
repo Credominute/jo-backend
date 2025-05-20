@@ -23,8 +23,6 @@ def read_ticket_by_id(ticket_id: int, db: Session):
     ticket_data['qrcode'] = generate_qr_code(str(ticket.ticket_id))
     return ticket_data
 
-"""ancien code : return ticket"""
-
 # lecture de tous les billets
 def read_ticket(db:Session):
     return db.query(Ticket).all() # select * from ticket
