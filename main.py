@@ -9,20 +9,14 @@ from api.user_api import UserApi
 from api.auth import router as auth_router
 from src.config.database import engine, Base
 
-
 # Création des tables sans suppression des données existantes
-# Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)
 
-def drop_and_create_database():
-    Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
-# CORSMiddleware déclaré immédiatement
 origins = [
-    "https://capable-halva-2ecf91.netlify.app"
+    "https://capable-halva-2ecf91.netlify.app/",  # ← à adapter avec ton vrai domaine Angular
 ]
-
 # Initialisation de CORS
 app.add_middleware( # type: ignore
     CORSMiddleware,
