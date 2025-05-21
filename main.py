@@ -1,6 +1,5 @@
 import os
 import uvicorn
-from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse
@@ -17,17 +16,17 @@ from src.config.database import engine, Base
 def drop_and_create_database():
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
+app = FastAPI()
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # drop_and_create_database()
-    yield
-app = FastAPI(lifespan=lifespan)
+# CORSMiddleware déclaré immédiatement
+origins = [
+    "https://capable-halva-2ecf91.netlify.app"
+]
 
 # Initialisation de CORS
-app.add_middleware(
+app.add_middleware( # type: ignore
     CORSMiddleware,
-    allow_origins=["https://capable-halva-2ecf91.netlify.app"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -60,13 +59,6 @@ def redirect_to_docs():
 @app.get("/test-cors")
 def test_cors():
     return {"message": "CORS test passed"}
-
-@app.middleware("http")
-async def log_requests(request, call_next):
-    print(f"Request: {request.method} {request.url}")
-    response = await call_next(request)
-    print(f"Response status: {response.status_code}")
-    return response
 
 # Point d'entrée pour initialiser un serveur local
 if __name__ == "__main__":
