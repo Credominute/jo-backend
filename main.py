@@ -20,14 +20,14 @@ def drop_and_create_database():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    drop_and_create_database()
+    # drop_and_create_database()
     yield
 app = FastAPI(lifespan=lifespan)
 
 # Initialisation de CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://capable-halva-2ecf91.netlify.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -43,10 +43,15 @@ app.include_router(order_api.router, prefix='/order', tags=["Order"])
 app.include_router(ticket_api.router, prefix='/ticket', tags=["Tickets"])
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
 
+
 # Pour les tests :
 @app.get("/ping")
 def ping():
     return {"message": "pong"}
+
+@app.get("/")
+def root():
+    return {"message": "API JO backend - disponible"}
 
 @app.get("/api")
 def redirect_to_docs():
@@ -55,6 +60,13 @@ def redirect_to_docs():
 @app.get("/test-cors")
 def test_cors():
     return {"message": "CORS test passed"}
+
+@app.middleware("http")
+async def log_requests(request, call_next):
+    print(f"Request: {request.method} {request.url}")
+    response = await call_next(request)
+    print(f"Response status: {response.status_code}")
+    return response
 
 # Point d'entrée pour initialiser un serveur local
 if __name__ == "__main__":

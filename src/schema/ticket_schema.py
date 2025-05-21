@@ -22,5 +22,3 @@ class TicketCreate(BaseModel):
     number_of_places: int
 
     model_config = ConfigDict(from_attributes=True, use_enum_values=True)
-
-

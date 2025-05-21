@@ -42,4 +42,8 @@ Ce qui lance les tests avec la collecte de la couverture, dont le rapport est fi
    ```bash
    coverage report -m
    ```
+Ou, plus court, en terminal de commande 
+   ```bash
+   pytest --cov=src
+   ```
 

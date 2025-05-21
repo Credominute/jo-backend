@@ -19,8 +19,3 @@ class OrderApi:
         @self.router.get("/{order_id}", response_model=OrderResponse)
         def read_order_endpoint(order_id: int, request: Request, db: Session = Depends(get_db)):
             return read_order_by_id(order_id, db)
-
-""" Ancien code : @self.router.post("/", response_model=TicketResponse)
-                  def create_order_endpoint(order_data: dict, db: Session = Depends(get_db)):
-                      order = OrderCreate(**order_data)
-                      return create_order_with_ticket(order, db) """
