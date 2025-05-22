@@ -15,7 +15,7 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 origins = [
-    "https://capable-halva-2ecf91.netlify.app/",  # ← à adapter avec ton vrai domaine Angular
+    "https://capable-halva-2ecf91.netlify.app",  # ← à adapter avec ton vrai domaine Angular
 ]
 # Initialisation de CORS
 app.add_middleware( # type: ignore
