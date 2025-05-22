@@ -1,12 +1,12 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-from src.model import user
 from src.model.user import User, UserRole
 from src.schema.login_schema import UserLogin
 from src.schema.user_schema import UserCreate
 from src.config.hash import pwd_context
 from src.service.auth_service import get_user_by_mail, get_user_by_nom
 from src.service.token_service import create_token
+from sqlalchemy.exc import IntegrityError
 
 ADMIN_EMAIL = "admin@hotmail.com"
 USER_NOT_FOUND_MSG = "User not found"
@@ -18,14 +18,19 @@ def verify_user(mail: str, db: Session):
 
 # création d'un utilisateur
 def create_user(user_data: UserCreate, db: Session):
-    # Vérifier si le nom existe déjà
+    # Vérifier si le nom et le mail existe déjà
     db_user = get_user_by_nom(db=db, nom=user_data.nom)
     if db_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Nom d'utilisateur déjà utilisé."
         )
-
+    db_user_mail = get_user_by_mail(db=db, mail=user_data.mail)
+    if db_user_mail:
+        raise HTTPException(
+            status_code=400,
+            detail="Adresse mail déjà utilisée."
+        )
     # Déterminer le rôle en fonction de l'email
     role = UserRole.admin if user_data.mail == ADMIN_EMAIL else UserRole.user
 
@@ -40,10 +45,21 @@ def create_user(user_data: UserCreate, db: Session):
         mot_de_passe=mdp_hache,
         role=role
     )
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    return new_user
+
+    try:
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        return new_user
+    except IntegrityError as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Erreur d’intégrité en base de données : données dupliquées ou contraintes non respectées."
+        )
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 # modèle de login standard par mail et mot_de_passe
 def login_user(login_data: UserLogin, db: Session):
@@ -83,7 +99,6 @@ def delete_user_by_id(user_id: int, db: Session):
     db.delete(db_user)
     db.commit()
     return db_user
-
 
 # mise à jour d'un utilisateur selon son id
 def update_user_by_id(user_id: int, updated_user: UserCreate, db: Session):

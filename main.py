@@ -8,6 +8,7 @@ from api.ticket_api import TicketApi
 from api.user_api import UserApi
 from api.auth import router as auth_router
 from src.config.database import engine, Base
+from fastapi.routing import APIRoute
 
 # Création des tables sans suppression des données existantes
 Base.metadata.create_all(bind=engine)
@@ -15,7 +16,7 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 origins = [
-    "https://capable-halva-2ecf91.netlify.app",  # ← à adapter avec ton vrai domaine Angular
+    "https://capable-halva-2ecf91.netlify.app",
 ]
 # Initialisation de CORS
 app.add_middleware( # type: ignore
@@ -53,6 +54,18 @@ def redirect_to_docs():
 @app.get("/test-cors")
 def test_cors():
     return {"message": "CORS test passed"}
+
+@app.get("/routes")
+def list_routes():
+    return [
+        {
+            "path": route.path,
+            "methods": list(route.methods),
+            "name": route.name
+        }
+        for route in app.routes
+        if isinstance(route, APIRoute)
+    ]
 
 # Point d'entrée pour initialiser un serveur local
 if __name__ == "__main__":
