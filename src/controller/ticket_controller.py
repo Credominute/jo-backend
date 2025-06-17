@@ -1,8 +1,40 @@
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 from sqlalchemy.orm import Session
+from datetime import datetime
+import json
 from src.service.qrcode_service import generate_qr_code
 from src.model.ticket import Ticket
 from src.schema.ticket_schema import TicketCreate
+
+async def validate_ticket_by_qr(request: Request, db: Session):
+    body_bytes = await request.body()
+    body_str = body_bytes.decode('utf-8')
+    body = json.loads(body_str)
+
+    ticket_id = body.get("ticket_id")
+    if not ticket_id:
+        raise HTTPException(status_code=400, detail="ticket_id manquant dans le corps de la requête.")
+
+    ticket = db.query(Ticket).filter(Ticket.ticket_id == int(ticket_id)).first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket non trouvé.")
+
+    if ticket.used:
+        raise HTTPException(status_code=403, detail="Ce ticket a déjà été utilisé.")
+
+    ticket.used = True
+    ticket.used_at = datetime.utcnow()
+    ticket.ip_validation = request.client.host
+
+    db.commit()
+    db.refresh(ticket)
+
+    return {
+        "message": "Ticket validé avec succès.",
+        "ticket_id": ticket.ticket_id,
+        "used_at": ticket.used_at.isoformat(),
+        "ip": ticket.ip_validation
+    }
 
 # création d'un billet
 def create_ticket(ticket: TicketCreate,db: Session):

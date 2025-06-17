@@ -3,9 +3,13 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from src.config.database import get_db
-from src.controller.ticket_controller import read_ticket, read_ticket_by_id, delete_ticket_by_id, create_ticket, update_ticket_by_id
+from src.controller.ticket_controller import (
+    read_ticket, read_ticket_by_id, delete_ticket_by_id,
+    create_ticket, update_ticket_by_id, validate_ticket_by_qr
+)
 from src.schema.ticket_schema import TicketResponse, TicketCreate
 from src.service.token_service import verify_token
+from src.config.rate_limiter import limiter
 
 class TicketApi:
 
@@ -40,3 +44,13 @@ class TicketApi:
                                          db: Session = Depends(get_db)):
             verify_token(request)
             return update_ticket_by_id(ticket_id, update_ticket, db)
+
+        # Nouvelle route de validation avec rate limiter
+        @self.router.post("/validate-ticket")
+        @limiter.limit("5/minute")
+        async def validate_ticket_endpoint(
+                request: Request,
+                db: Session = Depends(get_db)
+        ):
+            verify_token(request)  # sync call, ok sans await
+            return await validate_ticket_by_qr(request, db)  # async, donc await

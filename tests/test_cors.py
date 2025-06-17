@@ -6,8 +6,9 @@ client = TestClient(app)
 
 def test_cors_enabled():
     # Simulation d'une requête avec une origine différente
-    response = client.get("/ping", headers={"Origin": "http://example.com"})
+    response = client.get("/ping", headers={"Origin": "https://capable-halva-2ecf91.netlify.app"})
     headers = response.headers
 
     # Vérification que l'en-tête CORS est bien présent
     assert "access-control-allow-origin" in headers, f"Headers: {headers}"
+    assert headers["access-control-allow-origin"] == "https://capable-halva-2ecf91.netlify.app"
