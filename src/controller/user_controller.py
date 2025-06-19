@@ -39,7 +39,7 @@ def create_user(user_data: UserCreate, db: Session):
     mdp_hache = pwd_context.hash(user_data.mot_de_passe)
 
     # Génération d'une clé privée
-    cle_privee = secrets.token_hex(32)  # 256 bits
+    cle1 = secrets.token_hex(32)  # 256 bits
 
     new_user = User(
         nom=user_data.nom,
@@ -48,7 +48,7 @@ def create_user(user_data: UserCreate, db: Session):
         telephone=user_data.telephone,
         mot_de_passe=mdp_hache,
         role=role,
-        cle_privee = cle_privee
+        cle1 = cle1
     )
 
     try:
