@@ -6,6 +6,7 @@ import enum
 class UserRole(enum.Enum):
     user = "user"
     admin = "admin"
+    agent = "agent"
 
 class User(Base):
     __tablename__ = 'user' # client en français
@@ -17,6 +18,8 @@ class User(Base):
     telephone = Column(String(30))
     mot_de_passe = Column(String(255), nullable=False)
     role = Column(Enum(UserRole), default=UserRole.user, nullable=False)
+
+    cle1 = Column(String(255), nullable=False)  # Nouvelle colonne
 
     # Relation 1:0 avec la commande
     orders = relationship("Order", back_populates="user",

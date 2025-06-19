@@ -7,6 +7,7 @@ from src.config.hash import pwd_context
 from src.service.auth_service import get_user_by_mail, get_user_by_nom
 from src.service.token_service import create_token
 from sqlalchemy.exc import IntegrityError
+import secrets
 
 ADMIN_EMAIL = "admin@hotmail.com"
 USER_NOT_FOUND_MSG = "User not found"
@@ -37,13 +38,17 @@ def create_user(user_data: UserCreate, db: Session):
     # Hash du mot de passe
     mdp_hache = pwd_context.hash(user_data.mot_de_passe)
 
+    # Génération d'une clé privée
+    cle_privee = secrets.token_hex(32)  # 256 bits
+
     new_user = User(
         nom=user_data.nom,
         prenom=user_data.prenom,
         mail=user_data.mail,
         telephone=user_data.telephone,
         mot_de_passe=mdp_hache,
-        role=role
+        role=role,
+        cle_privee = cle_privee
     )
 
     try:

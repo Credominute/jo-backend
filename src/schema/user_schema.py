@@ -4,6 +4,7 @@ import enum
 class UserRole(str, enum.Enum):
     user = "user"
     admin = "admin"
+    agent = "agent"
 
 # Schema pour créer ou mettre à jour un utilisateur
 class UserCreate(BaseModel):
@@ -21,5 +22,6 @@ class UserResponse(UserCreate):
     mail: str
     telephone: str
     role: UserRole
+    cle1: str
 
     model_config = ConfigDict(from_attributes=True)
